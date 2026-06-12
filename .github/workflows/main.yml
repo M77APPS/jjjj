@@ -1,10 +1,10 @@
 # ====================================================================
-# THE UNIVERSAL ANROID ARCHIVE COMPILER & AUTOMATED CORE ENGINE (MEGA)
+# THE UNIVERSAL ANDROID ARCHIVE COMPILER & AUTOMATED CORE ENGINE (MEGA)
 # ====================================================================
 # Developed for: M77APPS / Hamo Electronic Cyber-Defense Ecosystem
-# Version: 10.0.0 (Absolute Sovereign Enterprise Grade - Monolithic Core)
+# Version: 10.1.0 (Absolute Sovereign Enterprise Grade - Monolithic Core)
 # Target: Convert ANY Zip/Rar/7z containing Android Source into fully signed Production APK
-# Architecture: Deep Path Virtualization, Dynamic JDK Healing, Comprehensive Keystore Seeding
+# Fix: Upgraded Core Gradle to 9.3.1 to match Android Gradle Plugin 9.1.1+ Requirements
 
 name: Universal Android ZIP to APK Monolithic Compiler
 
@@ -16,13 +16,10 @@ on:
   workflow_dispatch:
 
 env:
-  # الإعدادات الافتراضية القصوى لمحرك الجافا والذاكرة السحابية
-  SYSTEM_JDK_8: "8"
-  SYSTEM_JDK_11: "11"
   SYSTEM_JDK_17: "17"
   SYSTEM_JDK_21: "21"
   SYSTEM_JDK_22: "22"
-  GLOBAL_MEMORY_OPTS: "-Xmx6144m -XX:MaxMetaspaceSize=2048m -Djava.awt.headless=true -Dsun.awt.enableRemoteBlockedCheck=true"
+  GLOBAL_MEMORY_OPTS: "-Xmx6144m -XX:MaxMetaspaceSize=2048m -Djava.awt.headless=true"
   GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx6144m -XX:MaxMetaspaceSize=2048m -Dorg.gradle.parallel=false -Dorg.gradle.configureondemand=false"
 
 jobs:
@@ -45,7 +42,6 @@ jobs:
           lscpu | grep "Model name" || true
           free -h
           df -h
-          echo "=== التحقق من وجود أدوات معالجة النصوص وحزم فك الضغط ==="
           sudo apt-get update -y
           sudo apt-get install -y unzip p7zip-full unrar tar gzip coreutils sed grep findutils
 
@@ -58,7 +54,6 @@ jobs:
           TARGET_ARCHIVE=""
           ARCHIVE_FORMAT=""
           
-          # فحص كافة الامتدادات المحتملة التي قد يرفعها المستخدم
           for extension in zip rar 7z tar.gz tgz tar ZIP RAR 7Z TAR; do
             MATCHING_FILE=$(find . -maxdepth 2 -type f -name "*.$extension" | head -n 1)
             if [ -n "$MATCHING_FILE" ]; then
@@ -70,20 +65,18 @@ jobs:
 
           if [ -z "$TARGET_ARCHIVE" ]; then
             echo "⚠️ تنبيه أمني: لم يتم العثور على أي ملف مضغوط في جذر المشروع."
-            echo "سيتم التحقق مما إذا كان الكود المصدري مرفوعاً بشكل خام ومباشر..."
             if [ -n "$(find . -maxdepth 3 -name 'build.gradle*' -print -quit)" ]; then
-              echo "✅ تم رصد ملفات بناء أندرويد الخام مباشرة. سيتم الانتقال لمرحلة البناء الهيكلي."
+              echo "✅ تم رصد ملفات بناء أندرويد الخام مباشرة."
               exit 0
             else
-              echo "❌ خطأ فادح: المشروع لا يحتوي على ملف مضغوط ولا على ملفات بناء أندرويد Gradle الكلاسيكية!"
+              echo "❌ خطأ فادح: المشروع لا يحتوي على ملفات بناء!"
               exit 1
             fi
           fi
 
-          echo "🎯 تم اصطياد الملف المستهدف بنجاح: $TARGET_ARCHIVE (الامتداد الراداري: $ARCHIVE_FORMAT)"
+          echo "🎯 تم اصطياد الملف المستهدف بنجاح: $TARGET_ARCHIVE"
           mkdir -p hamo_extracted_master_workspace
 
-          echo "=== تنفيذ عملية فك الضغط التكتيكية وعزل الحزم ==="
           if [[ "$ARCHIVE_FORMAT" == "zip" || "$ARCHIVE_FORMAT" == "ZIP" ]]; then
             unzip -o "$TARGET_ARCHIVE" -d hamo_extracted_master_workspace
           elif [[ "$ARCHIVE_FORMAT" == "rar" || "$ARCHIVE_FORMAT" == "RAR" ]]; then
@@ -96,7 +89,6 @@ jobs:
             tar -xf "$TARGET_ARCHIVE" -C hamo_extracted_master_workspace/
           fi
 
-          echo "تطهير الذاكرة السحابية عبر مسح الملف المضغوط الأصلي فوراً..."
           rm -f "$TARGET_ARCHIVE"
 
       # ----------------------------------------------------------------
@@ -105,27 +97,21 @@ jobs:
       - name: "[المرحلة 3] تعقب الجذر البرمجي الفعلي (Root Discovery Engine)"
         run: |
           if [ ! -d hamo_extracted_master_workspace ]; then
-            echo "المسار مهيأ مسبقاً من الخطوة السابقة."
             exit 0
           fi
 
-          echo "=== البحث عن المجلد الحقيقي المحتوي على ملفات إعدادات أندرويد ==="
           ACTUAL_PROJECT_ROOT=$(find hamo_extracted_master_workspace -name "build.gradle*" -exec dirname {} \; | head -n 1)
 
           if [ -z "$ACTUAL_PROJECT_ROOT" ]; then
-            echo "❌ خطأ استراتيجي: الملف المضغوط لا يحتوي على أي بنية لمشروع أندرويد أو ملفات build.gradle!"
+            echo "❌ خطأ استراتيجي: الملف لا يحتوي على أي بنية لمشروع أندرويد!"
             exit 1
           fi
 
-          echo "✅ تم تحديد موقع النواة البرمجية الفعلي في المسار التالي: -> $ACTUAL_PROJECT_ROOT"
-          
-          echo "=== نقل الملفات بالكامل إلى جذر مساحة العمل الرئيسية الافتراضية ==="
           if [ "$ACTUAL_PROJECT_ROOT" != "." ] && [ "$ACTUAL_PROJECT_ROOT" != "./" ]; then
             mv "$ACTUAL_PROJECT_ROOT"/* . 2>/dev/null || true
             mv "$ACTUAL_PROJECT_ROOT"/.* . 2>/dev/null || true
           fi
           
-          echo "=== تصفية وتنظيف المخلفات والمجلدات الوهمية لمنع التضارب ==="
           rm -rf hamo_extracted_master_workspace
           find . -name "local.properties" -delete
           find . -name ".gradle" -type d -exec rm -rf {} + || true
@@ -133,34 +119,13 @@ jobs:
           find . -name "build" -type d -exec rm -rf {} + || true
 
       # ----------------------------------------------------------------
-      # المرحلة 4: التحليل الذكي لإصدار الجافا المطلوب لتجنب انهيار البناء
+      # المرحلة 4: التحليل الذكي لإصدار الجافا المطلوب
       # ----------------------------------------------------------------
       - name: "[المرحلة 4] التحليل الآلي لإصدار الـ JDK المتوافق مع شفرة التطبيق"
         id: parse_jdk
         run: |
-          echo "=== تحليل ملفات الإعدادات لتحديد إصدار الجافا المناسب للمشروع ==="
-          CHOSEN_JDK="${{ env.SYSTEM_JDK_21 }}"
-          
-          if find . -name "build.gradle*" -exec grep -q "JavaVersion.VERSION_1_8" {} \;; then
-            echo "رصد إشارة تدل على استخدام إصدار قديم JavaVersion.VERSION_1_8"
-            CHOSEN_JDK="${{ env.SYSTEM_JDK_8 }}"
-          elif find . -name "build.gradle*" -exec grep -q "JavaVersion.VERSION_11" {} \;; then
-            echo "رصد إشارة تدل على استخدام إصدار JavaVersion.VERSION_11"
-            CHOSEN_JDK="${{ env.SYSTEM_JDK_11 }}"
-          elif find . -name "build.gradle*" -exec grep -q "JavaVersion.VERSION_17" {} \;; then
-            echo "رصد إشارة تدل على استخدام إصدار JavaVersion.VERSION_17"
-            CHOSEN_JDK="${{ env.SYSTEM_JDK_17 }}"
-          elif find . -name "build.gradle*" -exec grep -q "JavaVersion.VERSION_21" {} \;; then
-            echo "رصد إصدار حديث متكامل JavaVersion.VERSION_21"
-            CHOSEN_JDK="${{ env.SYSTEM_JDK_21 }}"
-          fi
-
-          # التحقق من إصدار محرك أندرويد غريدل (Android Gradle Plugin) إن وجد لتأكيد التوافقية
-          if find . -name "build.gradle*" -exec grep -q "com.android.tools.build:gradle:8." {} \;; then
-            echo "تطبيق معاصر مبني على عتاد AGP 8.x، يتطلب إجبارياً جافا 17 أو أعلى."
-            CHOSEN_JDK="${{ env.SYSTEM_JDK_17 }}"
-          fi
-
+          # نظراً لأن مشروعك يستخدم AGP 9.1.1، فإننا نجبر النظام على استخدام Java 22 الحديثة لضمان التوافق مع إصدارات Gradle 9+
+          CHOSEN_JDK="${{ env.SYSTEM_JDK_22 }}"
           echo "🎯 الاستقرار النهائي لمحرك الجافا تقرر على الإصدار: $CHOSEN_JDK"
           echo "jdk_version=$CHOSEN_JDK" >> $GITHUB_OUTPUT
 
@@ -172,50 +137,45 @@ jobs:
           cache: 'gradle'
 
       # ----------------------------------------------------------------
-      # المرحلة 5: إصلاح، بناء وترقية محرك الغريدل (Gradle Engine Repair)
+      # المرحلة 5: إصلاح وترقية محرك الغريدل إلى 9.3.1 (الخطوة المفتاحية لحل الإيرور)
       # ----------------------------------------------------------------
-      - name: "[المرحلة 5] فحص وإصلاح ملفات الإقلاع التنفيذية (Gradle Wrapper Core)"
+      - name: "[المرحلة 5] فحص وإصلاح ملفات الإقلاع التنفيذية وترقيتها إلى إصدار 9.3.1"
         run: |
           echo "=== التحقق من وجود ملفات الإقلاع ومجلد الخصائص ==="
           WRAPPER_PROPERTIES_PATH=$(find . -name "gradle-wrapper.properties" | head -n 1)
           
           if [ -n "$WRAPPER_PROPERTIES_PATH" ]; then
             echo "تم العثور على إعدادات محرك التجميع في المسار: $WRAPPER_PROPERTIES_PATH"
-            echo "تحديث وتعديل رابط التوزيع السحابي لتأمين أحدث نسخة مستقرة 8.7 لمنع مشاكل التحميل..."
-            sed -i 's/gradle-.*-bin.zip/gradle-8.7-bin.zip/g' "$WRAPPER_PROPERTIES_PATH"
-            sed -i 's/gradle-.*-all.zip/gradle-8.7-all.zip/g' "$WRAPPER_PROPERTIES_PATH"
+            echo "تحديث وتعديل رابط التوزيع السحابي لتأمين إصدار التوافق المطلق 9.3.1..."
+            sed -i 's/gradle-.*-bin.zip/gradle-9.3.1-bin.zip/g' "$WRAPPER_PROPERTIES_PATH"
+            sed -i 's/gradle-.*-all.zip/gradle-9.3.1-all.zip/g' "$WRAPPER_PROPERTIES_PATH"
           fi
 
           if [ ! -f gradlew ]; then
-            echo "⚠️ تحذير: نص الإقلاع التنفيذي 'gradlew' مفقود في هذا التطبيق!"
-            echo "توليد ملف إقلاع تنفيذي جديد متوافق مع البيئة الحالية..."
-            gradle wrapper --gradle-version 8.7
+            echo "توليد ملف إقلاع تنفيذي جديد متوافق مع إصدار 9.3.1..."
+            gradle wrapper --gradle-version 9.3.1
           else
-            echo "ملف الإقلاع متوفر. جاري ترقيته وتأمينه..."
-            gradle wrapper --gradle-version 8.7 || true
+            echo "ملف الإقلاع متوفر. جاري إجبار النظام على الترقية لـ 9.3.1..."
+            gradle wrapper --gradle-version 9.3.1 || true
           fi
           
-          echo "=== منح الصلاحيات المطلقة لملف الإقلاع وتحويل ترميز الملف لبيئة الينكس ==="
           chmod +x gradlew
           sed -i 's/\r$//' gradlew
 
       # ----------------------------------------------------------------
-      # المرحلة 6: حقن خصائص الأمان والحماية والذاكرة العشوائية المتقدمة
+      # المرحلة 6: حقن خصائص الأمان والذاكرة
       # ----------------------------------------------------------------
       - name: "[المرحلة 6] تشفير وحقن التعديلات السيبرانية داخل ملف gradle.properties"
         run: |
-          echo "=== حقن وتعديل معاملات البناء الصارمة لمنع تضارب الحزم والمكتبات القديمة ==="
           GLOBAL_PROPERTY_FILE="gradle.properties"
           if [ ! -f "$GLOBAL_PROPERTY_FILE" ]; then
             touch "$GLOBAL_PROPERTY_FILE"
           fi
           
-          # مسح الخصائص المتضاربة بالذاكرة لمنع تجاوز الحد المسموح به للسيرفر السحابي
           sed -i '/org.gradle.jvmargs/d' "$GLOBAL_PROPERTY_FILE" || true
           sed -i '/android.useAndroidX/d' "$GLOBAL_PROPERTY_FILE" || true
           sed -i '/android.enableJetifier/d' "$GLOBAL_PROPERTY_FILE" || true
           
-          # دمج معاملات التوافقية الكبرى وحظر الكاش الجزئي لمنع الأخطاء العشوائية أثناء المعالجة الكثيفة
           cat <<EOF >> "$GLOBAL_PROPERTY_FILE"
           org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=1024m -Djava.awt.headless=true
           android.useAndroidX=true
@@ -226,83 +186,64 @@ jobs:
           org.gradle.configureondemand=false
           org.gradle.caching=false
           EOF
-          
-          echo "=== مراجعة نهائية لملف الخصائص المحقون ==="
-          cat "$GLOBAL_PROPERTY_FILE"
 
       # ----------------------------------------------------------------
-      # المرحلة 7: معالجة السيرفرات والمستودعات المفقودة وتأمين سحب المكتبات
+      # المرحلة 7: معالجة المستودعات المفقودة
       # ----------------------------------------------------------------
       - name: "[المرحلة 7] ترميم مسارات سحب المكتبات الخارجية (Auto-Repository Healer)"
         run: |
-          echo "=== حقن المستودعات المركزية العالمية في جميع ملفات البناء لضمان العثور على جميع الـ Dependencies ==="
           find . -name "build.gradle" -o -name "build.gradle.kts" | while read -r build_file; do
             if [ -f "$build_file" ]; then
-              echo "جاري ترقية مستودعات الملف: $build_file"
-              # إدخال مستودعات غوغل والمركزية في السطور الأولى من كتل الـ repositories
               sed -i 's/repositories {/repositories { \n        google() \n        mavenCentral() \n        maven { url "https:\/\/jitpack.io" }/g' "$build_file" || true
             fi
           done
 
       # ----------------------------------------------------------------
-      # المرحلة 8: التوقيع الرقمي وتوزيع مفاتيح التشفير الشامل في كل المجلدات
+      # المرحلة 8: التوقيع الرقمي وتوزيع مفاتيح التشفير الشامل
       # ----------------------------------------------------------------
       - name: "[المرحلة 8] زرع ونشر التوقيع الرقمي السيبراني (Global Absolute Keystore Seeder)"
         run: |
-          echo "=== توليد مفتاح توقيع رقمي أندرويد حقيقي ومشفر للتطبيق ==="
           keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Hamo Electronic,O=M77APPS,C=EG" || true
           
-          echo "=== نشر وتوزيع ملف المفتاح الرقمي في كل الزوايا والمجلدات لضمان عدم توقف عملية الـ Signing ==="
-          # زرع في جذر المستودع الرئيسي (لحل المشكلة السابقة مباشرة)
           cp debug.keystore ./debug.keystore || true
-          
-          # زرع داخل مجلد التطبيق الرئيسي 'app'
           if [ -d "app" ]; then
             cp debug.keystore app/debug.keystore || true
           fi
           
-          # زرع ديناميكي في كل مجلد يحتوي على ملف إعدادات برمجية للتحصين الشامل
           find . -name "build.gradle" -o -name "build.gradle.kts" | while read -r configuration_file; do
             TARGET_DIR=$(dirname "$configuration_file")
-            echo "زرع نسخة احتياطية في العقدة الهيكلية: $TARGET_DIR"
             cp debug.keystore "$TARGET_DIR/debug.keystore" || true
           done
 
       # ----------------------------------------------------------------
-      # المرحلة 9: بدء عملية التجميع السحابية الكبرى ومتعددة المسارات
+      # المرحلة 9: بدء عملية التجميع السحابية الكبرى
       # ----------------------------------------------------------------
       - name: "[المرحلة 9] تفعيل محرك التجميع السحابي العملاق (Deep Compilation Phase)"
         run: |
-          echo "=== إطلاق عملية مسح المخلفات القديمة وبدء بناء النواة ==="
+          echo "=== تنظيف المخلفات وبدء البناء باستخدام المحرك الجديد ==="
           ./gradlew clean --no-configuration-cache --no-daemon -Djava.awt.headless=true
           
-          echo "=== تنفيذ أمر التجميع الرئيسي وإصدار ملف الـ APK النهائي ==="
-          # المحاولة الأولى عبر الأمر الشامل للمشروع بأكمله
+          echo "=== تشغيل أمر التجميع والإصدار السريع ==="
           ./gradlew assembleDebug --no-configuration-cache --stacktrace --no-daemon -Djava.awt.headless=true -Dorg.gradle.workers.max=1 || {
-            echo "⚠️ تحذير خط تجميع أولي: تعذر البناء الشامل الخارجي، جاري التبديل الفوري للمسار الاحتياطي المباشر للموديول الرئيسي..."
             ./gradlew :app:assembleDebug --no-configuration-cache --no-daemon -Djava.awt.headless=true -Dorg.gradle.workers.max=1 || {
-              echo "⚠️ خط دفاع أخير: جاري محاولة إصدار نسخة تجميعية من نوع Release في حال عدم تهيئة خيار الـ Debug..."
               ./gradlew assembleRelease --no-configuration-cache --no-daemon -Djava.awt.headless=true -Dorg.gradle.workers.max=1
             }
           }
 
       # ----------------------------------------------------------------
-      # المرحلة 10: الفحص والتحقق الرقمي من مكان وتواجد ملفات الـ APK الناتجة
+      # المرحلة 10: الفحص والتحقق الرقمي
       # ----------------------------------------------------------------
       - name: "[المرحلة 10] الفحص الميداني للمخرجات وتسجيل مسارات الـ APK"
         run: |
-          echo "=== مراجعة الهيكل النهائي لمساحة العمل ==="
-          ls -la
-          echo "=== رصد وتوثيق مواقع ملفات الـ APK التي تم بناؤها بنجاح ==="
           find . -name "*.apk" -type f
           echo "========================================================"
-          echo "✅ تم البناء بنجاح ساحق ومطلق بواسطة منظومة حمو الإلكترونية!"
+          echo "✅ تم تخطي عقبة الإصدارات وتم البناء بنجاح ساحق!"
           echo "========================================================"
 
       # ----------------------------------------------------------------
-      # المرحلة 11: رفع وحفظ ملف الـ APK النهائي على السيرفر السحابي لـ GitHub
+      # المرحلة 11: رفع ملف الـ APK النهائي للتحميل
       # ----------------------------------------------------------------
-      - name: "[المرحلة 11] رفع وتأمين ملف الـ APK النهائي للتحميل الفوري (Artifacts Deploy)"
+      - name: "[المرحلة 11] رفع وتأمين ملف الـ APK النهائي للتحميل الفوري"
         uses: actions/upload-artifact@v4
         with:
           name: M77APPS-Hamo-Electronic-Sovereign-APK
