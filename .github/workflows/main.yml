@@ -2,9 +2,9 @@
 # THE UNIVERSAL ANDROID ARCHIVE COMPILER & AUTOMATED CORE ENGINE (MEGA)
 # ====================================================================
 # Developed for: M77APPS / Hamo Electronic Cyber-Defense Ecosystem
-# Version: 10.1.2 (Absolute Sovereign Enterprise Grade - Syntax Patched)
+# Version: 10.1.3 (Absolute Sovereign Enterprise Grade - Auto Rescue)
 # Target: Convert ANY Zip/Rar/7z containing Android Source into fully signed Production APK
-# Fix: Removed trailing space from gradle.properties generation
+# Fix: Upgraded Resource Sanitizer to Rescue & Move misplaced source files instead of deleting them
 
 name: Universal Android ZIP to APK Monolithic Compiler
 
@@ -159,7 +159,7 @@ jobs:
           sed -i 's/\r$//' gradlew
 
       # ----------------------------------------------------------------
-      # المرحلة 6: حقن خصائص الأمان والذاكرة (تم إصلاح خطأ المسافة)
+      # المرحلة 6: حقن خصائص الأمان والذاكرة
       # ----------------------------------------------------------------
       - name: "[المرحلة 6] تشفير وحقن التعديلات السيبرانية داخل ملف gradle.properties"
         run: |
@@ -213,13 +213,29 @@ jobs:
           done
 
       # ----------------------------------------------------------------
-      # المرحلة 8.5: التطهير الذكي لمجلد الموارد
+      # المرحلة 8.5: التطهير والإنقاذ الذكي للملفات المفقودة (التحديث الجوهري)
       # ----------------------------------------------------------------
-      - name: "[المرحلة 8.5] عزل وتدمير الملفات البرمجية الدخيلة من مجلد الموارد (Resource Sanitizer)"
+      - name: "[المرحلة 8.5] رصد وإنقاذ الملفات البرمجية الدخيلة في مجلد الموارد (Resource File Rescuer)"
         run: |
-          echo "=== فحص وتطهير مجلد الموارد (res) من الملفات المخالفة ==="
-          find . -path "*/src/*/res/*" -type f \( -name "*.kt" -o -name "*.java" \) -exec echo "🗑️ تم رصد وحذف ملف مخالف:" {} \; -exec rm -f {} + || true
-          echo "✅ تم تأمين مجلد الموارد بنجاح."
+          echo "=== بدء رصد وإنقاذ الملفات الضالة في مجلد الموارد (res) ==="
+          
+          # البحث عن ملفات .kt أو .java الموجودة بالخطأ داخل مجلد الموارد
+          find . -path "*/src/*/res/*" -type f \( -name "*.kt" -o -name "*.java" \) | while read -r misplaced_file; do
+            echo "🎯 تم اصطياد ملف برمجى ضال: $misplaced_file"
+            
+            # استخراج المجلد الأساسي للتطبيق (مثال: ./app)
+            MODULE_ROOT=$(echo "$misplaced_file" | sed 's/\/src\/.*//')
+            
+            # تحديد مسار السورس كود الشرعي (src/main/java)
+            LEGIT_SRC_DIR="$MODULE_ROOT/src/main/java"
+            mkdir -p "$LEGIT_SRC_DIR"
+            
+            # نقل الملف بدلاً من حذفه حتى يتعرف عليه المترجم (Compiler)
+            echo "🚚 جاري النقل الفوري إلى مسار الكود الصحيح: $LEGIT_SRC_DIR"
+            mv "$misplaced_file" "$LEGIT_SRC_DIR/"
+          done
+          
+          echo "✅ تم تطهير الموارد بنجاح وحفظ سلامة البناء البرمجي للتطبيق."
 
       # ----------------------------------------------------------------
       # المرحلة 9: بدء عملية التجميع السحابية الكبرى
