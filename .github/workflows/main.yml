@@ -2,9 +2,9 @@
 # THE UNIVERSAL ANDROID ARCHIVE COMPILER & AUTOMATED CORE ENGINE (MEGA)
 # ====================================================================
 # Developed for: M77APPS / Hamo Electronic Cyber-Defense Ecosystem
-# Version: 10.1.1 (Absolute Sovereign Enterprise Grade - Auto Healing)
+# Version: 10.1.2 (Absolute Sovereign Enterprise Grade - Syntax Patched)
 # Target: Convert ANY Zip/Rar/7z containing Android Source into fully signed Production APK
-# Fix: Added Resource Directory Auto-Sanitizer to bypass AAPT2 Kotlin/Java errors
+# Fix: Removed trailing space from gradle.properties generation
 
 name: Universal Android ZIP to APK Monolithic Compiler
 
@@ -159,7 +159,7 @@ jobs:
           sed -i 's/\r$//' gradlew
 
       # ----------------------------------------------------------------
-      # المرحلة 6: حقن خصائص الأمان والذاكرة
+      # المرحلة 6: حقن خصائص الأمان والذاكرة (تم إصلاح خطأ المسافة)
       # ----------------------------------------------------------------
       - name: "[المرحلة 6] تشفير وحقن التعديلات السيبرانية داخل ملف gradle.properties"
         run: |
@@ -175,8 +175,7 @@ jobs:
           cat <<EOF >> "$GLOBAL_PROPERTY_FILE"
           org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=1024m -Djava.awt.headless=true
           android.useAndroidX=true
-          # تم إيقاف Jetifier لأنه أصبح Deprecated لتجنب التحذيرات
-          android.enableJetifier=false 
+          android.enableJetifier=false
           kotlin.incremental=false
           ksp.incremental=false
           org.gradle.parallel=false
@@ -202,23 +201,23 @@ jobs:
         run: |
           keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Hamo Electronic,O=M77APPS,C=EG" || true
           
-          cp debug.keystore ./debug.keystore || true
           if [ -d "app" ]; then
             cp debug.keystore app/debug.keystore || true
           fi
           
           find . -name "build.gradle" -o -name "build.gradle.kts" | while read -r configuration_file; do
             TARGET_DIR=$(dirname "$configuration_file")
-            cp debug.keystore "$TARGET_DIR/debug.keystore" || true
+            if [ "$TARGET_DIR" != "." ]; then
+              cp debug.keystore "$TARGET_DIR/debug.keystore" || true
+            fi
           done
 
       # ----------------------------------------------------------------
-      # المرحلة 8.5: التطهير الذكي لمجلد الموارد (الحل الجذري للخطأ)
+      # المرحلة 8.5: التطهير الذكي لمجلد الموارد
       # ----------------------------------------------------------------
       - name: "[المرحلة 8.5] عزل وتدمير الملفات البرمجية الدخيلة من مجلد الموارد (Resource Sanitizer)"
         run: |
           echo "=== فحص وتطهير مجلد الموارد (res) من الملفات المخالفة ==="
-          # يقوم هذا الأمر بالبحث في أي مجلد يحمل اسم res وحذف ملفات الكوتلن والجافا التي تتسبب في فشل التجميع
           find . -path "*/src/*/res/*" -type f \( -name "*.kt" -o -name "*.java" \) -exec echo "🗑️ تم رصد وحذف ملف مخالف:" {} \; -exec rm -f {} + || true
           echo "✅ تم تأمين مجلد الموارد بنجاح."
 
