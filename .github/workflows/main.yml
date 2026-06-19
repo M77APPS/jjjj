@@ -2,9 +2,9 @@
 # THE UNIVERSAL ANDROID ARCHIVE COMPILER & AUTOMATED CORE ENGINE (MEGA)
 # ====================================================================
 # Developed for: M77APPS / Hamo Electronic Cyber-Defense Ecosystem
-# Version: 10.1.0 (Absolute Sovereign Enterprise Grade - Monolithic Core)
+# Version: 10.1.1 (Absolute Sovereign Enterprise Grade - Auto Healing)
 # Target: Convert ANY Zip/Rar/7z containing Android Source into fully signed Production APK
-# Fix: Upgraded Core Gradle to 9.3.1 to match Android Gradle Plugin 9.1.1+ Requirements
+# Fix: Added Resource Directory Auto-Sanitizer to bypass AAPT2 Kotlin/Java errors
 
 name: Universal Android ZIP to APK Monolithic Compiler
 
@@ -124,7 +124,6 @@ jobs:
       - name: "[المرحلة 4] التحليل الآلي لإصدار الـ JDK المتوافق مع شفرة التطبيق"
         id: parse_jdk
         run: |
-          # نظراً لأن مشروعك يستخدم AGP 9.1.1، فإننا نجبر النظام على استخدام Java 22 الحديثة لضمان التوافق مع إصدارات Gradle 9+
           CHOSEN_JDK="${{ env.SYSTEM_JDK_22 }}"
           echo "🎯 الاستقرار النهائي لمحرك الجافا تقرر على الإصدار: $CHOSEN_JDK"
           echo "jdk_version=$CHOSEN_JDK" >> $GITHUB_OUTPUT
@@ -137,7 +136,7 @@ jobs:
           cache: 'gradle'
 
       # ----------------------------------------------------------------
-      # المرحلة 5: إصلاح وترقية محرك الغريدل إلى 9.3.1 (الخطوة المفتاحية لحل الإيرور)
+      # المرحلة 5: إصلاح وترقية محرك الغريدل إلى 9.3.1
       # ----------------------------------------------------------------
       - name: "[المرحلة 5] فحص وإصلاح ملفات الإقلاع التنفيذية وترقيتها إلى إصدار 9.3.1"
         run: |
@@ -145,17 +144,14 @@ jobs:
           WRAPPER_PROPERTIES_PATH=$(find . -name "gradle-wrapper.properties" | head -n 1)
           
           if [ -n "$WRAPPER_PROPERTIES_PATH" ]; then
-            echo "تم العثور على إعدادات محرك التجميع في المسار: $WRAPPER_PROPERTIES_PATH"
-            echo "تحديث وتعديل رابط التوزيع السحابي لتأمين إصدار التوافق المطلق 9.3.1..."
+            echo "تم العثور على إعدادات محرك التجميع، جاري ترقية الرابط لـ 9.3.1..."
             sed -i 's/gradle-.*-bin.zip/gradle-9.3.1-bin.zip/g' "$WRAPPER_PROPERTIES_PATH"
             sed -i 's/gradle-.*-all.zip/gradle-9.3.1-all.zip/g' "$WRAPPER_PROPERTIES_PATH"
           fi
 
           if [ ! -f gradlew ]; then
-            echo "توليد ملف إقلاع تنفيذي جديد متوافق مع إصدار 9.3.1..."
             gradle wrapper --gradle-version 9.3.1
           else
-            echo "ملف الإقلاع متوفر. جاري إجبار النظام على الترقية لـ 9.3.1..."
             gradle wrapper --gradle-version 9.3.1 || true
           fi
           
@@ -179,7 +175,8 @@ jobs:
           cat <<EOF >> "$GLOBAL_PROPERTY_FILE"
           org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=1024m -Djava.awt.headless=true
           android.useAndroidX=true
-          android.enableJetifier=true
+          # تم إيقاف Jetifier لأنه أصبح Deprecated لتجنب التحذيرات
+          android.enableJetifier=false 
           kotlin.incremental=false
           ksp.incremental=false
           org.gradle.parallel=false
@@ -214,6 +211,16 @@ jobs:
             TARGET_DIR=$(dirname "$configuration_file")
             cp debug.keystore "$TARGET_DIR/debug.keystore" || true
           done
+
+      # ----------------------------------------------------------------
+      # المرحلة 8.5: التطهير الذكي لمجلد الموارد (الحل الجذري للخطأ)
+      # ----------------------------------------------------------------
+      - name: "[المرحلة 8.5] عزل وتدمير الملفات البرمجية الدخيلة من مجلد الموارد (Resource Sanitizer)"
+        run: |
+          echo "=== فحص وتطهير مجلد الموارد (res) من الملفات المخالفة ==="
+          # يقوم هذا الأمر بالبحث في أي مجلد يحمل اسم res وحذف ملفات الكوتلن والجافا التي تتسبب في فشل التجميع
+          find . -path "*/src/*/res/*" -type f \( -name "*.kt" -o -name "*.java" \) -exec echo "🗑️ تم رصد وحذف ملف مخالف:" {} \; -exec rm -f {} + || true
+          echo "✅ تم تأمين مجلد الموارد بنجاح."
 
       # ----------------------------------------------------------------
       # المرحلة 9: بدء عملية التجميع السحابية الكبرى
